@@ -2,6 +2,9 @@ package ca.canada.camerafeature;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -22,6 +25,8 @@ public class MainActivity extends AppCompatActivity {
 
     private ImageView imageView;
     private Button btnPhoto;
+    private Bitmap imageBitmap;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,12 +37,59 @@ public class MainActivity extends AppCompatActivity {
         btnPhoto = findViewById(R.id.btnPhoto);
 
         btnPhoto.setOnClickListener(new View.OnClickListener() {
-
             @Override
             public void onClick(View v) {
                 dispatchTakePictureIntent();
             }
         });
+
+//        imageView.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View iv) {
+//                float angle = iv.getRotation() + 90;
+//                float sx = imageView.getDrawable().getBounds().width();
+//                float sy = imageView.getDrawable().getBounds().height();
+//                float px = imageView.getWidth()/2;
+//                float py = imageView.getHeight()/2;
+//                float ix = imageView.getWidth();
+//                float iy = imageView.getHeight();
+//                float sfx;
+//                float sfy;
+//
+//                Matrix matrix = new Matrix();
+//                if (ix >= sx) {
+//                    sfx = ix/sx;
+//                } else {
+//                    sfx = sx/ix;
+//                }
+//
+//
+//                if (iy >= sy) {
+//                    sfy = iy/sy;
+//                } else {
+//                    sfy = sy/iy;
+//                }
+//
+////                float sfx = Math.min(ix/sx, sx/ix);
+////                float sfy = Math.min(iy/sy, sy/iy);
+////                float my = iy/sy;
+//                float sf = Math.min(ix/sx, iy/sy);
+//                System.out.print(
+//                        "\npx: " + px + "\npy: " + py +
+//                        "\nsx: " + sx + "\nsy: " + sy +
+//                        "\nix: " + ix + "\niy: " + iy +
+//                        "\nsfx: " + sfx + "\nsfy: " + sfy +
+//                        "\nmx: " + mx + "\nmy: " + my);
+//
+//
+//                imageView.setScaleType(ImageView.ScaleType.MATRIX);
+////                matrix.setRotate(90f, imageView.getDrawable().getBounds().width()/2, imageView.getDrawable().getBounds().height()/2);
+//                matrix.postRotate( 90f, px, py);
+//                matrix.postScale(sf, sf);
+//
+//                imageView.setImageMatrix(matrix);
+//            }
+//        });
     }
 
 
@@ -66,12 +118,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
+//            Bundle extras = data.getExtras();
+////            Bitmap imageBitmap = (Bitmap) extras.get("data");
+//            Bitmap imageBitmap = (Bitmap) extras.get(MediaStore.EXTRA_OUTPUT);
+//            imageView.setImageBitmap(imageBitmap);
+//        }
+//    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            imageView.setImageBitmap(imageBitmap);
+            setPic();
         }
     }
 
@@ -92,5 +152,60 @@ public class MainActivity extends AppCompatActivity {
         // Save a file: path for use with ACTION_VIEW intents
         currentPhotoPath = image.getAbsolutePath();
         return image;
+    }
+
+    private void galleryAddPic() {
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        File f = new File(currentPhotoPath);
+        Uri contentUri = Uri.fromFile(f);
+        mediaScanIntent.setData(contentUri);
+        this.sendBroadcast(mediaScanIntent);
+    }
+
+    private void setPic() {
+        // Get the dimensions of the View
+        int targetW = imageView.getWidth();
+        int targetH = imageView.getHeight();
+
+        // Get the dimensions of the bitmap
+        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+        bmOptions.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(currentPhotoPath, bmOptions);
+        int photoW = bmOptions.outWidth;
+        int photoH = bmOptions.outHeight;
+
+        // Determine how much to scale down the image
+        int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+
+        // Decode the image file into a Bitmap sized to fill the View
+        bmOptions.inJustDecodeBounds = false;
+        bmOptions.inSampleSize = scaleFactor;
+        bmOptions.inPurgeable = true;
+
+        Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath, bmOptions);
+        imageView.setImageBitmap(bitmap);
+    }
+
+    // From https://stackoverflow.com/questions/8981845/android-rotate-image-in-imageview-by-an-angle
+    public void rotate(View v) {
+//        float angle = 90;
+//        float px = v.getWidth();
+//        float py = v.getHeight();
+//
+//        Matrix matrix = new Matrix();
+//        v.setScaleType(ImageView.ScaleType.MATRIX);
+//        matrix.postRotate(angle, px, py);
+//        v.setImageMatrix(matrix);
+
+//        float dsjf = v.getDrawa
+        v.setPivotX(v.getWidth()/2);
+        v.setPivotY(v.getHeight()/2);
+        v.setRotation(v.getRotation() + 90);
+//        v.setScaleX(v.getParent().);
+
+//        int targetW = imageView.getWidth();
+//        int targetH = imageView.getHeight();
+//        int photoW = bmOptions.outWidth;
+//        int photoH = bmOptions.outHeight;
     }
 }
